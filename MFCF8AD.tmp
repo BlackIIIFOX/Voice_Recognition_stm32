@@ -1,0 +1,109 @@
+#include "stm32f10x.h"
+//#include "system_stm32f10x.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
+#include "LCD.h"
+
+//GPIO_InitTypeDef port;
+#define F_CPU 72000000UL
+
+
+void Init_UART();//объявление функции иницилизации UART
+void Send_UART(unsigned char* string);
+
+void USART1_IRQHandler(void)
+{
+	if (USART1->SR & USART_SR_RXNE)
+	{
+          
+	}
+}
+
+int main()
+{
+  SystemInit();
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);//Для дисплея
+  RCC->APB2ENR	|= RCC_APB2ENR_USART1EN|RCC_APB2ENR_AFIOEN;//Для UART
+  Init_UART();
+  //LCD_Init();
+  //LCD_write("Arduino мусор");
+  uint8_t x,y;
+  uint16_t z;
+  unsigned char out_string[100];
+  uint8_t mode;
+  
+  while(1) //Выбор режима работы: 1-Вывод на дисплей,2-расчет формулы
+  {
+    Send_UART("Выберите режим работы(1/2)\r");
+    while(!(USART1->SR&0x20));
+    mode = USART1->DR;
+    if(mode==1|mode==2) break;
+  }
+  
+  while(1)
+  {
+    switch(mode)
+        {
+        case 2:
+              Send_UART("Input number variant\r");
+              while(!(USART1->SR&0x20));
+              if(USART1->DR!=4) 
+              {
+                Send_UART("Variant number does not match\r\r");
+                continue;
+              }
+              Send_UART("Input x\r");
+              while(!(USART1->SR&0x20));
+              x = USART1->DR;
+              
+              Send_UART("Input y\r");
+              while(!(USART1->SR&0x20));
+              y = USART1->DR;
+              
+              if(x>y) z=x+y;
+              else z=x*y;
+             
+              
+              sprintf( out_string, "%x", z );
+              Send_UART("0x");
+              Send_UART(out_string);
+              Send_UART("\r\r");
+              break;
+        case 1:
+          break;
+      }
+  }
+}
+
+void Init_UART()
+{
+  	GPIOA->CRH	&= ~GPIO_CRH_CNF9;	// Clear CNF bit 9
+        GPIOA->CRH	|= GPIO_CRH_CNF9_1;	// Set CNF bit 9 to 10 - AFIO Push-Pull
+        GPIOA->CRH	|= GPIO_CRH_MODE9_0;
+        
+        GPIOA->CRH	&= ~GPIO_CRH_CNF10;	// Clear CNF bit 10
+        GPIOA->CRH	|= GPIO_CRH_CNF10_0;	// Set CNF bit 10 to 01 = HiZ
+        GPIOA->CRH	&= ~GPIO_CRH_MODE10;	// Set MODE bit 10 to Mode 01 = 10MHz
+        
+        //((72 000 000/Bodrate)/16)
+        //USART1->BRR 	= 0xEA6;					// Bodrate for 19200 on 72Mhz
+        USART1->BRR 	= 0x270;                                        // Bodrate for 115200 on 72Mhz
+        USART1->CR1 	|= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE |		// USART1 ON, TX ON, RX ON
+                             USART_CR1_RXNEIE;					// RXNE Int ON	
+        
+        //NVIC_EnableIRQ (USART1_IRQn);
+        //__enable_irq ();
+}
+
+
+void Send_UART(unsigned char* string)
+{
+      int i = 0;
+      while (string[i] != '\0')
+      {
+        USART1->DR = string[i];
+        while(!(USART1->SR&0x80));
+        i++;
+      }
+}
+

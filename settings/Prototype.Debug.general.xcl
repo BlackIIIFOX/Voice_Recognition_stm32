@@ -1,0 +1,15 @@
+"D:\Programs\IAR\arm\bin\armproc.dll" 
+
+"D:\Programs\IAR\arm\bin\armstlink2.dll" 
+
+"D:\Data\MyProject\Voice\Voice_Recognition_stm32\Debug\Exe\c.out" 
+
+--plugin="D:\Programs\IAR\arm\bin\armbat.dll" 
+
+--device_macro="D:\Programs\IAR\arm\config\debugger\ST\STM32F1xx.dmac" 
+
+--flash_loader="D:\Programs\IAR\arm\config\flashloader\ST\FlashSTM32F10xx8.board" 
+
+
+
+

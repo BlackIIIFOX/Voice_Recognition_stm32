@@ -1,0 +1,97 @@
+#include "stm32f10x.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_tim.h"
+#define F_CPU 72000000UL
+
+
+
+
+
+void Init_LED();
+void Init_Timer();
+
+int main()
+{
+  SystemInit();
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);//Для дисплея 
+  //RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);//Для таймера
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM2,ENABLE);//Для таймера
+  
+  Init_LED();
+  Init_Timer();
+  
+  //GPIOA->ODR = 0x1;
+  //GPIOA->ODR = 0x0;
+  while(1);
+}
+
+
+void Init_Timer()
+{
+  TIM_TimeBaseInitTypeDef base_timer;
+  TIM_TimeBaseStructInit(&base_timer);
+  
+  
+  /*
+  //base_timer.TIM_Prescaler = 3600 - 1; //первый делитель частоты(максимум 65к)
+  //base_timer.TIM_Period = 1;         //второй делитель частоты
+  base_timer.TIM_Prescaler = 36000 - 1;
+  base_timer.TIM_Period = 2000; 
+  
+  TIM_TimeBaseInit(TIM3, &base_timer);
+  
+  TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
+  TIM_Cmd(TIM3, ENABLE);
+  
+  //NVIC_EnableIRQ(TIM3_IRQn);
+  */
+  
+  
+  base_timer.TIM_Prescaler = 36000 - 1; //первый делитель частоты(максимум 65к)
+  base_timer.TIM_Period = 2000;         //второй делитель частоты
+  TIM_TimeBaseInit(TIM2, &base_timer);
+  
+  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+  TIM_Cmd(TIM2, ENABLE);
+  
+  NVIC_EnableIRQ(TIM2_IRQn);
+  
+}
+
+int i=0;
+
+/*
+void TIM3_IRQHandler()
+{
+  TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+  //i++;
+  if(i==20000){
+    //i=0;
+    //GPIOA->ODR = ~GPIOA->ODR;
+  }
+  //GPIOA->ODR = ~GPIOA->ODR;
+}
+*/
+
+
+void TIM2_IRQHandler()
+{
+  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+  i++;
+    if(i==20000){
+    i=0;
+    GPIOA->ODR = ~GPIOA->ODR;
+  }
+  //GPIOA->ODR = ~GPIOA->ODR;
+}
+
+void Init_LED()
+{ 
+   GPIO_InitTypeDef port;
+   GPIO_StructInit(&port);
+   port.GPIO_Mode = GPIO_Mode_Out_PP;
+   port.GPIO_Pin = GPIO_Pin_0;
+   port.GPIO_Speed = GPIO_Speed_2MHz;
+   GPIO_Init(GPIOA, &port); 
+}
